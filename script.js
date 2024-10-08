@@ -1,21 +1,20 @@
 // Создать базу данных
-const db = new Dexie("DB");
+const db = new Dexie("dataBase");
 
 // Создать таблицу
 db.version(1).stores({
-  myTable: '++id, параметр, значение';
+  dataBase: '++id, параметр, значение'
 });
-
-// Выбрать и прочитать csv файл
-const csvFile = document.querySelector('#file');
-const content = readCSV(csvFile)
 
 // Функция чтения CSV файла
 function readCSV(file) {
-  let csv = file.files[0];
   let reader = new FileReader();
 
-  reader.readAsText(csv);
+  // Прочесть, как текст
+  reader.readAsText(file);
+
+  // При успешной загрузке получить текст, спарсить, как csv файл
+  // и вернуть результат
   reader.onload = function(event) {
     console.log(reader.result);
 
@@ -25,6 +24,7 @@ function readCSV(file) {
     return data;
   };
 
+  // При ошибке вывести сообщение в консоль
   reader.onerror = function() {
     console.log(reader.error);
   };
@@ -59,3 +59,20 @@ function parseCSV(text) {
   // Вернуть получившийся массив
   return content;
 };
+
+// Функция импорта csv файла
+function importCSV(file) {
+  const content = readCSV(file);
+  db.dataBase.bulkAdd(content);
+};
+
+// Получить выбранный файл и записать в базу данных
+const input = document.getElementById('input');
+const container = document.getElementById('container');
+csvFile.addEventListener('change', function(event) {
+  const file = event.target.files[0];
+  if (file) {
+    importCSV(file);
+    console.log("imported!");
+  };  
+});
