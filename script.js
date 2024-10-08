@@ -84,7 +84,7 @@ async function displayTable() {
 
     // Если таблица пуста, вывести об этом сообщение и выйти из функции
     if (dbData.length === 0) {
-      console.log("Данных нет.");
+      console.log("Данных нет");
       return;
     };
 
@@ -96,8 +96,8 @@ async function displayTable() {
     tHeader.textContent = '';
     tBody.textContent = '';
 
-    // Создать заголовки таблицы из первой строки БД
-    const tHeaders = Object.keys(dbData[0]);
+    // Создать заголовки таблицы из первой строки БД, исключить id
+    const tHeaders = Object.keys(dbData[0]).filter(header => header !== 'id');
 
     // Заполнить заголовки
     tHeaders.forEach(header => {
@@ -131,14 +131,13 @@ async function displayTable() {
 // Получить выбранный файл и записать в базу данных
 const input = document.getElementById('input');
 const container = document.getElementById('container');
-input.addEventListener('change', function(event) {
+input.addEventListener('change', async function(event) {
   const file = event.target.files[0];
   if (file) {
-    importCSV(file);
-    console.log("imported!");
+    // Ждать завершения импорта файла и обновлять таблицу на странице
+    await importCSV(file);
+    await displayTable();
   };
-
-  displayTable();
 });
 
 // Построить таблицу при загрузке страницы
