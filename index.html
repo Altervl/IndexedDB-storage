@@ -11,7 +11,9 @@
 </head>
 <body>
     <div id="container">
-        <input type="file" id="input" accept=".csv"/>
+        <input type="file" id="input" accept=".csv" hidden/>
+        <button id="import" onclick="document.getElementById('input').click();">Импортировать CSV</button>
+        <button id="export">Экспортировать CSV</button>
         <table id="table">
             <thead>
                 <tr id="theader"></tr>

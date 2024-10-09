@@ -145,6 +145,71 @@ async function displayTable() {
   };
 };
 
+// Функция экспорта данных из БД в csv
+async function exportCSV() {
+  try {
+    // Получить данные из БД
+    const expData = await db.dataTable.toArray();
+
+    // Если данные в БД отсутствуют, вывести сообщение об этом в консоль
+    // и выйти из функции
+    if (expData.length === 0) {
+      console.log("Нет данных для экспорта");
+      return;
+    }
+
+    // Создать заголовки, исключить id
+    const expHeaders = Object.keys(expData[0]).filter(header => header !== 'id');
+
+    // Создать массив строк для экспорта
+    // Заголовки
+    let expContent = expHeaders.join(',') + '\n';
+
+    // Данные
+    expData.forEach(row => {
+      // Создать строку таблицы с парой данных "параметр-значение"
+      const expRow = expHeaders.map(header => row[header]);
+
+      // Добавить строку в массив
+      expContent += expRow.join(',') + '\n';
+
+    });
+
+    // Скачать файл с записанными данными
+    downloadCSV(expContent, 'export.csv');
+  } catch (error) {
+    
+    // Вывести в консоль сообщение об ошибке при неудаче
+    console.error('Ошибка экспорта данных', error);
+  };
+};
+
+// Функция скачивания экспортированного CSV файла
+function downloadCSV(fileData, fileName) {
+  // Создать объект для будущего файла
+  const blob = new Blob([fileData], {type: 'text/csv;charset=utf-8;'});
+
+  // Создать ссылку для скачивания
+  const link = document.createElement('a');
+
+  // создать URL для ссылки
+  const url = URL.createObjectURL(blob);
+
+  // Добавить ссылке URL, привязать имя файла для скачивания и скрыть из видимости
+  link.setAttribute('href', url);
+  link.setAttribute('download', fileName);
+  link.style.visibility = 'hidden';
+
+  // Добавить ссылку на страницу
+  document.body.appendChild(link);
+  
+  // Автоматически нажать для скачивания файла
+  link.click();
+  
+  // Удалить ссылку со страницы
+  document.body.removeChild(link);
+};
+
 // Получить выбранный файл и записать в базу данных
 const input = document.getElementById('input');
 input.addEventListener('change', async function(event) {
@@ -160,3 +225,7 @@ input.addEventListener('change', async function(event) {
 window.onload = function() {
   displayTable();
 };
+
+// Экспорт данных в CSV файл
+const expButton = document.getElementById('export');
+expButton.addEventListener('click', exportCSV);
