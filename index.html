@@ -5,14 +5,16 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Хранилище данных</title>
-    <link rel="stylesheet" href="./styles.css">
+    <link rel="stylesheet" href="styles/styles.css">
     <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
-    <script defer src="./script.js"></script>
+    <script defer src="scripts/script.js"></script>
 </head>
 <body>
     <div id="container">
         <input type="file" id="input" accept=".csv" hidden/>
-        <button id="import" onclick="document.getElementById('input').click();">Импортировать CSV</button>
+        <button id="import" onclick="document.getElementById('input').click();">
+            Импортировать CSV
+        </button>
         <button id="export">Экспортировать CSV</button>
         <table id="table">
             <thead>

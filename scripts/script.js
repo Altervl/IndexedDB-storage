@@ -1,10 +1,33 @@
-// Создать базу данных
+// База данных
+
+// Создать БД
 const db = new Dexie("dataBase");
 
 // Создать таблицу
 db.version(1).stores({
   dataTable: '++id, параметр, значение'
 });
+
+
+// Функции для работы с CSV файлами
+
+// Функция импорта CSV файла
+async function importCSV(file) {
+  try {
+    // Ждать чтения файла и парсинга данных
+    const content = await readCSV(file);
+
+    // Очистить таблицу в БД перед новым импортом
+    await db.dataTable.clear();
+
+    // Добавить новые строки с данными
+    for (const row of content) {
+      db.dataTable.add(row);
+    };
+  } catch (error) {
+    console.error("Ошибка импорта данных", error);
+  };
+};
 
 // Функция чтения CSV файла
 async function readCSV(file) {
@@ -15,7 +38,7 @@ async function readCSV(file) {
     reader.readAsText(file);
 
     // При успешной загрузке получить текст,
-    // спарсить, как csv файл, и вернуть результат
+    // спарсить, как CSV файл, и вернуть результат
     reader.onload = function(event) {
       console.log(reader.result);
 
@@ -33,7 +56,7 @@ async function readCSV(file) {
   });
 };
 
-// Функция для парсинга CSV
+// Функция парсинга CSV файла
 function parseCSV(text) {
   // Получить строки из файла
   const rows = text.split('\n');
@@ -63,23 +86,70 @@ function parseCSV(text) {
   return content;
 };
 
-// Функция импорта csv файла
-async function importCSV(file) {
+// Функция экспорта данных из БД в CSV
+async function exportCSV() {
   try {
-    // Ждать чтения файла и парсинга данных
-    const content = await readCSV(file);
+    // Получить данные из БД
+    const expData = await db.dataTable.toArray();
 
-    // Очистить таблицу в БД перед новым импортом
-    await db.dataTable.clear();
+    // Если данные в БД отсутствуют, вывести сообщение об этом в консоль
+    // и выйти из функции
+    if (expData.length === 0) {
+      console.log("Нет данных для экспорта");
+      return;
+    }
 
-    // Добавить новые строки с данными
-    for (const row of content) {
-      db.dataTable.add(row);
-    };
+    // Создать заголовки, исключить id
+    const expHeaders = Object.keys(expData[0]).filter(header => header !== 'id');
+
+    // Создать массив строк для экспорта
+    // Заголовки
+    let expContent = expHeaders.join(',') + '\n';
+
+    // Данные
+    expData.forEach(row => {
+      // Создать строку таблицы данными "параметр-значение"
+      const expRow = expHeaders.map(header => row[header]);
+
+      // Добавить строку в массив
+      expContent += expRow.join(',') + '\n';
+    });
+
+    // Скачать файл с записанными данными
+    downloadCSV(expContent, 'export.csv');
   } catch (error) {
-    console.error("Ошибка импорта данных", error);
+    
+    // Вывести в консоль сообщение об ошибке при неудаче
+    console.error('Ошибка экспорта данных', error);
   };
 };
+
+// Функция скачивания экспортированного CSV файла
+function downloadCSV(fileData, fileName) {
+  // Создать объект для будущего файла
+  const blob = new Blob([fileData], {type: 'text/csv;charset=utf-8;'});
+
+  // Создать ссылку для скачивания
+  const link = document.createElement('a');
+
+  // создать URL для ссылки
+  const url = URL.createObjectURL(blob);
+
+  // Добавить ссылке URL, привязать имя файла для скачивания и скрыть из видимости
+  link.setAttribute('href', url);
+  link.setAttribute('download', fileName);
+  link.style.visibility = 'hidden';
+
+  // Добавить ссылку на страницу
+  document.body.appendChild(link);
+  
+  // Автоматически кликнуть для скачивания файла
+  link.click();
+  
+  // Удалить ссылку со страницы
+  document.body.removeChild(link);
+};
+
 
 // Функция отображения данных из БД
 async function displayTable() {
@@ -111,12 +181,12 @@ async function displayTable() {
       tHeader.appendChild(th);
     });
 
-    // Заполнить ячейки:
-    // для каждой строки в БД создать строку в HTML...
+    // Заполнить ячейки
+    // Для каждой строки в БД создать строку в HTML
     dbData.forEach(row => {
       const tr = document.createElement('tr');
 
-      // ...и в каждой созданной строке заполнить ячейки под соответствующим столбцом
+      // В каждой строке заполнить ячейки
       tHeaders.forEach(header => {
         const td = document.createElement('td');
         td.textContent = row[header];
@@ -145,70 +215,8 @@ async function displayTable() {
   };
 };
 
-// Функция экспорта данных из БД в csv
-async function exportCSV() {
-  try {
-    // Получить данные из БД
-    const expData = await db.dataTable.toArray();
 
-    // Если данные в БД отсутствуют, вывести сообщение об этом в консоль
-    // и выйти из функции
-    if (expData.length === 0) {
-      console.log("Нет данных для экспорта");
-      return;
-    }
-
-    // Создать заголовки, исключить id
-    const expHeaders = Object.keys(expData[0]).filter(header => header !== 'id');
-
-    // Создать массив строк для экспорта
-    // Заголовки
-    let expContent = expHeaders.join(',') + '\n';
-
-    // Данные
-    expData.forEach(row => {
-      // Создать строку таблицы с парой данных "параметр-значение"
-      const expRow = expHeaders.map(header => row[header]);
-
-      // Добавить строку в массив
-      expContent += expRow.join(',') + '\n';
-
-    });
-
-    // Скачать файл с записанными данными
-    downloadCSV(expContent, 'export.csv');
-  } catch (error) {
-    
-    // Вывести в консоль сообщение об ошибке при неудаче
-    console.error('Ошибка экспорта данных', error);
-  };
-};
-
-// Функция скачивания экспортированного CSV файла
-function downloadCSV(fileData, fileName) {
-  // Создать объект для будущего файла
-  const blob = new Blob([fileData], {type: 'text/csv;charset=utf-8;'});
-
-  // Создать ссылку для скачивания
-  const link = document.createElement('a');
-
-  // создать URL для ссылки
-  const url = URL.createObjectURL(blob);
-
-  // Добавить ссылке URL, привязать имя файла для скачивания и скрыть из видимости
-  link.setAttribute('href', url);
-  link.setAttribute('download', fileName);
-  link.style.visibility = 'hidden';
-
-  // Добавить ссылку на страницу
-  document.body.appendChild(link);
-  
-  // Автоматически нажать для скачивания файла
-  link.click();
-  
-  // Удалить ссылку со страницы
-  document.body.removeChild(link);
-};
+// Логика
 
 // Получить выбранный файл и записать в базу данных
 const input = document.getElementById('input');
