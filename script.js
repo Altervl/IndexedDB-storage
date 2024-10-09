@@ -69,8 +69,13 @@ async function importCSV(file) {
     // Ждать чтения файла и парсинга данных
     const content = await readCSV(file);
 
-    // Ждать добавления данных в БД
-    await db.dataTable.bulkAdd(content);
+    // Очистить таблицу в БД перед новым импортом
+    await db.dataTable.clear();
+
+    // Добавить новые строки с данными
+    for (const row of content) {
+      db.dataTable.add(row);
+    };
   } catch (error) {
     console.error("Ошибка импорта данных", error);
   };
@@ -116,6 +121,18 @@ async function displayTable() {
         const td = document.createElement('td');
         td.textContent = row[header];
 
+        // Сделать ячейку редактируемой
+        td.contentEditable = 'true';
+
+        // Сохранить изменения при потере фокуса
+        td.addEventListener('blur', async function() {
+          // Получить новое значение ячейки
+          const newValue = td.textContent;
+
+          // Обновить записть в IndexedDB
+          await db.dataTable.update(row.id, { [header]: newValue });
+        });
+
         // Вставить ячейку в строку
         tr.appendChild(td);
       });
@@ -130,7 +147,6 @@ async function displayTable() {
 
 // Получить выбранный файл и записать в базу данных
 const input = document.getElementById('input');
-const container = document.getElementById('container');
 input.addEventListener('change', async function(event) {
   const file = event.target.files[0];
   if (file) {
