@@ -1,1 +1,1 @@
-Приложение для импорта, изменения и экспорта данных из CSV файлов. Данные сохраняются в IndexedDB. Демонстрация: https://altervl.github.io/IndexedDB-storage/
+Приложение для импорта, изменения и экспорта данных из/в CSV. Данные сохраняются в IndexedDB. Демонстрация: https://altervl.github.io/IndexedDB-storage/
